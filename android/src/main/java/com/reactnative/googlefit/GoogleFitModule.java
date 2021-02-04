@@ -10,6 +10,7 @@
 
 package com.reactnative.googlefit;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import android.content.Intent;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -132,7 +135,7 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
     }
 
     @ReactMethod
-    public void getDailyStepCountSamples(double startDate, 
+    public void getDailyStepCountSamples(double startDate,
                                          double endDate,
                                          int bucketInterval,
                                          String bucketUnit,
@@ -422,6 +425,16 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
     public void getSleepSamples(double startDate, double endDate, Promise promise) {
         try {
            mGoogleFitManager.getSleepHistory().getSleepData((long)startDate, (long)endDate, promise);
+        } catch (Error e) {
+            promise.reject(e);
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @ReactMethod
+    public void getActivitySessions(double startDate, double endDate, Promise promise) {
+        try {
+            mGoogleFitManager.getActivityHistory().getActivitySessions((long)startDate, (long)endDate, promise);
         } catch (Error e) {
             promise.reject(e);
         }

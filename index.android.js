@@ -565,6 +565,17 @@ class RNGoogleFit {
     return prepareResponse(result, "addedBy");
   }
 
+  getActivitySessions = async (options) => {
+    const { startDate, endDate } = prepareInput(options);
+
+    const result = await googleFit.getActivitySessions(
+      startDate,
+      endDate
+    );
+
+    return prepareResponse(result, "appPackageName");
+  }
+
   saveSleep = async (options) => {
     const result = await googleFit.saveSleep(options);
     return result;

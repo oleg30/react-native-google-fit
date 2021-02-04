@@ -150,6 +150,14 @@ declare module 'react-native-google-fit' {
       options: Partial<StartAndEndDate>
     ) => Promise<SleepSampleResponse[]>
 
+    /**
+     * Get the activity sessions over a specified date range.
+     * @param {Object} options getActivitySessions accepts an options object containing required startDate: ISO8601Timestamp and endDate: ISO8601Timestamp.
+     */
+    getActivitySessions: (
+      options: Partial<StartAndEndDate>
+    ) => Promise<ActivitySessionResponse[]>
+
     saveSleep: (
       options: SleepSample
     ) => Promise<Boolean | undefined>
@@ -232,7 +240,7 @@ declare module 'react-native-google-fit' {
   };
 
   type rawSteps = Array<{startDate: string, endDate: string, steps: number}>;
-  
+
   export type StepsResponse = {
     source: string,
     steps: Array<{date: string, value: number }>,
@@ -286,10 +294,14 @@ declare module 'react-native-google-fit' {
     tracked: boolean,
     activityName: string,
     end: number,
-    start: number 
+    start: number
     calories?: number,
     quantity?: number,
     distance?: number
+  }
+
+  export type ActivitySessionResponse = {
+    // TODO
   }
 
   export type NutrientResponse = {
@@ -444,9 +456,7 @@ declare module 'react-native-google-fit' {
     FITNESS_REPRODUCTIVE_HEALTH_READ = 'https://www.googleapis.com/auth/fitness.reproductive_health.read',
     FITNESS_REPRODUCTIVE_HEALTH_WRITE = 'https://www.googleapis.com/auth/fitness.reproductive_health.write',
     FITNESS_SLEEP_READ =  'https://www.googleapis.com/auth/fitness.sleep.read',
-    FITNESS_SLEEP_WRITE = 'https://www.googleapis.com/auth/fitness.sleep.write',
-    FITNESS_HEART_RATE_READ = 'https://www.googleapis.com/auth/fitness.heart_rate.read',
-    FITNESS_HEART_RATE_WRITE= 'https://www.googleapis.com/auth/fitness.heart_rate.write'
+    FITNESS_SLEEP_WRITE = 'https://www.googleapis.com/auth/fitness.sleep.write'
   }
 
   const googleFit: GoogleFit;
