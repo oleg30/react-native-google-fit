@@ -300,8 +300,34 @@ declare module 'react-native-google-fit' {
     distance?: number
   }
 
+  export type ActivitySessionResponseDatasetField =  {
+    "points":
+      {
+        "format": number
+        "value": number
+        "endDate": string; // "2021-02-02T13:04:00.000+0300",
+        "startDate": string; // "2021-02-02T12:04:00.000+0300"
+      }[],
+    "format": number
+    "name": string
+  }
+  export type ActivitySessionResponseDataset =  {
+    "fields": ActivitySessionResponseDatasetField[]
+    "dataSourceStreamName": string;
+    "dataSourceStreamId": string;
+    "dataSourceType": bigint;
+    "dataSourceAppPackageName": string;
+    "dataTypeName": string;
+  }
   export type ActivitySessionResponse = {
-    // TODO
+        "activity": string;
+        "datasets": ActivitySessionResponseDataset[],
+        "description": "",
+        "startDate": "2021-02-02T12:04:00.000+0300",
+        "name": null,
+        "endDate": "2021-02-02T13:04:00.000+0300",
+        "appPackageName": "com.google.android.apps.fitness",
+        "identifier": "6af7241c-0d6b-4bbe-a117-f1a9a098d9b7"
   }
 
   export type NutrientResponse = {
