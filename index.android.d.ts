@@ -323,9 +323,9 @@ declare module 'react-native-google-fit' {
         "activity"?: string;
         "datasets": ActivitySessionResponseDataset[],
         "description"?: string
-        "startDate"?: string
+        "startDate": string
         "name"?: string | null,
-        "endDate"?: string
+        "endDate": string
         "appPackageName"?: string
         "identifier"?: string
   }
