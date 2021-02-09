@@ -187,7 +187,6 @@ public class ActivityHistory {
                         // Get sessions
                         List<Session> activitySessions = response.getSessions()
                                 .stream()
-                                .filter(s -> s.getActivity().equals(FitnessActivities.RUNNING))
                                 .collect(Collectors.toList());
 
                         // Sessions result array
