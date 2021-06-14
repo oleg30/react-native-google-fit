@@ -40,6 +40,10 @@ import com.google.android.gms.fitness.result.DataReadResult;
 import com.google.android.gms.fitness.result.SessionReadResponse;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.fitness.result.DataReadResponse;
+import com.google.android.gms.fitness.result.DataReadResult;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 import org.json.JSONStringer;
 
@@ -285,4 +289,39 @@ public class ActivityHistory {
     }
 
 
+    public ReadableArray getMoveMinutes(long startTime, long endTime, int bucketInterval, String bucketUnit) {
+        DataType[] fitnessDataTypes = {DataType.TYPE_MOVE_MINUTES, DataType.AGGREGATE_MOVE_MINUTES};
+        DataReadRequest readReq = HelperUtil.createDataReadRequest(
+                startTime,
+                endTime,
+                bucketInterval,
+                bucketUnit,
+                fitnessDataTypes);
+        Integer[] accessOpts = {FitnessOptions.ACCESS_READ};
+        GoogleSignInOptionsExtension fitnessOptions = HelperUtil.createSignInFitnessOptions(DataType.TYPE_MOVE_MINUTES, accessOpts);
+
+        GoogleSignInAccount googleSignInAccount =
+                GoogleSignIn.getAccountForExtension(this.mReactContext, fitnessOptions);
+
+        WritableArray moveMinutes = Arguments.createArray();
+
+        try {
+            Task<DataReadResponse> task = Fitness.getHistoryClient(this.mReactContext, googleSignInAccount)
+                    .readData(readReq);
+            DataReadResponse response = Tasks.await(task, 30, TimeUnit.SECONDS);
+            if (response.getStatus().isSuccess()) {
+                for (Bucket bucket : response.getBuckets()) {
+                    for (DataSet dataSet : bucket.getDataSets()) {
+                        HelperUtil.processDataSet(TAG, dataSet, moveMinutes);
+                    }
+                }
+                return moveMinutes;
+            } else {
+                Log.w(TAG, "There was an error reading data from Google Fit" + response.getStatus().toString());
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Exception: " + e);
+        }
+        return moveMinutes;
+    }
 }

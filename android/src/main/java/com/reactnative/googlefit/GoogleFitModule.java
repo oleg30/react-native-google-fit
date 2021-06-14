@@ -167,6 +167,20 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
     }
 
     @ReactMethod
+    public void getMoveMinutes(double startDate,
+                               double endDate,
+                               int bucketInterval,
+                               String bucketUnit,
+                               Promise promise)
+    {
+        try {
+            promise.resolve(mGoogleFitManager.getActivityHistory().getMoveMinutes((long)startDate, (long)endDate, bucketInterval, bucketUnit));
+        } catch (Exception e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
     public void getUserInputSteps(double startDate,
                                 double endDate,
                                 Callback errorCallback,
