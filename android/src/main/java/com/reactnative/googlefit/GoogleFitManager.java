@@ -29,18 +29,18 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.ErrorDialogFragment;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.auth.api.signin.*;
+import com.google.android.gms.tasks.Task;
 
 
-public class GoogleFitManager implements
-        ActivityEventListener {
+public class GoogleFitManager implements ActivityEventListener {
 
     private ReactContext mReactContext;
     private GoogleApiClient mApiClient;
@@ -52,7 +52,7 @@ public class GoogleFitManager implements
     private DistanceHistory distanceHistory;
     private StepHistory stepHistory;
     private BodyHistory bodyHistory;
-    private HeartrateHistory heartrateHistory;
+    private HealthHistory healthHistory;
     private CalorieHistory calorieHistory;
     private NutritionHistory nutritionHistory;
     private StepCounter mStepCounter;
@@ -63,6 +63,8 @@ public class GoogleFitManager implements
     private SleepHistory sleepHistory;
 
     private static final String TAG = "RNGoogleFit";
+//    reserve to replace deprecated Api in the future
+    private GoogleSignInClient mSignInClient;
 
     public GoogleFitManager(ReactContext reactContext, Activity activity) {
 
@@ -75,7 +77,7 @@ public class GoogleFitManager implements
         this.mStepCounter = new StepCounter(mReactContext, this, activity);
         this.stepHistory = new StepHistory(mReactContext, this);
         this.bodyHistory = new BodyHistory(mReactContext, this);
-        this.heartrateHistory = new HeartrateHistory(mReactContext, this);
+        this.healthHistory = new HealthHistory(mReactContext, this);
         this.distanceHistory = new DistanceHistory(mReactContext, this);
         this.calorieHistory = new CalorieHistory(mReactContext, this);
         this.nutritionHistory = new NutritionHistory(mReactContext, this);
@@ -106,8 +108,8 @@ public class GoogleFitManager implements
         return bodyHistory;
     }
 
-    public HeartrateHistory getHeartrateHistory() {
-        return heartrateHistory;
+    public HealthHistory getHealthHistory() {
+        return healthHistory;
     }
 
     public DistanceHistory getDistanceHistory() {
@@ -132,10 +134,25 @@ public class GoogleFitManager implements
     public void authorize(ArrayList<String> userScopes) {
         final ReactContext mReactContext = this.mReactContext;
 
+//    reserve to replace deprecated Api in the future
+//        GoogleSignInOptions.Builder optionsBuilder =
+//                new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+//                        .requestEmail()
+//                        .requestProfile();
+//
+//        for (String scopeName : userScopes) {
+//            optionsBuilder.requestScopes(new Scope(scopeName));
+//        }
+//
+//        mSignInClient = GoogleSignIn.getClient(this.mActivity, optionsBuilder.build());
+//        Intent intent = mSignInClient.getSignInIntent();
+//        this.mActivity.startActivityForResult(intent, REQUEST_OAUTH);
+
         GoogleApiClient.Builder apiClientBuilder = new GoogleApiClient.Builder(mReactContext.getApplicationContext())
                 .addApi(Fitness.SENSORS_API)
                 .addApi(Fitness.HISTORY_API)
-                .addApi(Fitness.RECORDING_API);
+                .addApi(Fitness.RECORDING_API)
+                .addApi(Fitness.SESSIONS_API);
 
         for (String scopeName : userScopes) {
             apiClientBuilder.addScope(new Scope(scopeName));
@@ -195,8 +212,11 @@ public class GoogleFitManager implements
                 .requestEmail()
                 .build();
         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(context, options);
-
-        GoogleSignInAccount gsa = GoogleSignIn.getAccountForScopes(mReactContext, new Scope(Scopes.FITNESS_ACTIVITY_READ));
+        // this is a temporary scope as a hotfix
+        // Ref to https://developers.google.com/android/guides/releases?hl=en
+        // will be removed in the future release
+        String tempScope = "www.googleapis.com/auth/fitness.activity.read";
+        GoogleSignInAccount gsa = GoogleSignIn.getAccountForScopes(mReactContext, new Scope(tempScope));
         Fitness.getConfigClient(mReactContext, gsa).disableFit();
         mApiClient.disconnect();
 
@@ -232,6 +252,31 @@ public class GoogleFitManager implements
                 .emit(eventName, params);
     }
 
+//    reserve to replace deprecated Api in the future
+//    @Override
+//    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+//        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
+//        if (requestCode == REQUEST_OAUTH) {
+//            // The Task returned from this call is always completed, no need to attach
+//            // a listener.
+//            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+//            handleSignInResult(task);
+//        }
+//    }
+//
+//    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+//        try {
+//            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+//            if (!mApiClient.isConnecting() && !mApiClient.isConnected()) {
+//                mApiClient.connect();
+//            }
+//        } catch (ApiException e) {
+//            Log.e(TAG, "Authorization - Cancel");
+//            WritableMap map = Arguments.createMap();
+//            map.putString("message", "" + "Authorization cancelled");
+//            sendEvent(mReactContext, "GoogleFitAuthorizeFailure", map);
+//        }
+//    }
 
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {

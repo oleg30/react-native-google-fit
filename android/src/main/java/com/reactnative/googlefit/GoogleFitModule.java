@@ -10,7 +10,9 @@
 
 package com.reactnative.googlefit;
 
+/* TODO: Stayfitt code */
 import android.Manifest;
+
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -19,6 +21,8 @@ import java.util.ArrayList;
 import android.content.Intent;
 
 import androidx.annotation.RequiresApi;
+
+/* TODO: Stayfitt code */
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -378,10 +382,66 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
                                         String bucketUnit,
                                         Promise promise) {
         try {
-            HeartrateHistory heartrateHistory = mGoogleFitManager.getHeartrateHistory();
-            heartrateHistory.setDataType(HealthDataTypes.TYPE_BLOOD_PRESSURE);
-            promise.resolve(heartrateHistory.getHistory((long)startDate, (long)endDate, bucketInterval, bucketUnit));
+            HealthHistory healthHistory = mGoogleFitManager.getHealthHistory();
+            healthHistory.setDataType(HealthDataTypes.TYPE_BLOOD_PRESSURE);
+            promise.resolve(healthHistory.getHistory((long)startDate, (long)endDate, bucketInterval, bucketUnit));
         } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void getBodyTemperatureSamples(double startDate,
+                                       double endDate,
+                                       int bucketInterval,
+                                       String bucketUnit,
+                                       Promise promise) {
+        try {
+            HealthHistory healthHistory = mGoogleFitManager.getHealthHistory();
+            healthHistory.setDataType(HealthDataTypes.TYPE_BODY_TEMPERATURE);
+            promise.resolve(healthHistory.getHistory((long)startDate, (long)endDate, bucketInterval, bucketUnit));
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void getOxygenSaturationSamples(double startDate,
+                                       double endDate,
+                                       int bucketInterval,
+                                       String bucketUnit,
+                                       Promise promise) {
+        try {
+            HealthHistory healthHistory = mGoogleFitManager.getHealthHistory();
+            healthHistory.setDataType(HealthDataTypes.TYPE_OXYGEN_SATURATION);
+            promise.resolve(healthHistory.getHistory((long)startDate, (long)endDate, bucketInterval, bucketUnit));
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void getBloodGlucoseSamples(double startDate,
+                                        double endDate,
+                                        int bucketInterval,
+                                        String bucketUnit,
+                                        Promise promise) {
+        try {
+            HealthHistory healthHistory = mGoogleFitManager.getHealthHistory();
+            healthHistory.setDataType(HealthDataTypes.TYPE_BLOOD_GLUCOSE);
+            promise.resolve(healthHistory.getHistory((long)startDate, (long)endDate, bucketInterval, bucketUnit));
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void saveBloodGlucose(ReadableMap bloodGlucoseSample, Promise promise) {
+        try {
+            HealthHistory healthHistory = mGoogleFitManager.getHealthHistory();
+            healthHistory.setDataType(HealthDataTypes.TYPE_BLOOD_GLUCOSE);
+            healthHistory.saveBloodGlucose(bloodGlucoseSample);
+        } catch (Error e) {
             promise.reject(e);
         }
     }
@@ -394,9 +454,9 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
                                     Promise promise) {
 
         try {
-            HeartrateHistory heartrateHistory = mGoogleFitManager.getHeartrateHistory();
-            heartrateHistory.setDataType(DataType.TYPE_HEART_RATE_BPM);
-            promise.resolve(heartrateHistory.getHistory((long)startDate, (long)endDate, bucketInterval, bucketUnit));
+            HealthHistory healthHistory = mGoogleFitManager.getHealthHistory();
+            healthHistory.setDataType(DataType.TYPE_HEART_RATE_BPM);
+            promise.resolve(healthHistory.getHistory((long)startDate, (long)endDate, bucketInterval, bucketUnit));
         } catch (IllegalViewOperationException e) {
             promise.reject(e);
         }
@@ -444,6 +504,7 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
         }
     }
 
+    /* TODO: Stayfitt code */
     @RequiresApi(api = Build.VERSION_CODES.N)
     @ReactMethod
     public void getActivitySessions(double startDate, double endDate, Promise promise) {
@@ -453,11 +514,37 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
             promise.reject(e);
         }
     }
-
-    @ReactMethod
+ @ReactMethod
     public void saveSleep(ReadableMap sleepSample, Promise promise) {
         try {
             mGoogleFitManager.getSleepHistory().saveSleep(sleepSample, promise);
+        } catch (Error e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void getWorkoutSession(double startDate, double endDate, ReadableMap options, Promise promise) {
+        try{
+            mGoogleFitManager.getActivityHistory().getWorkoutSession((long)startDate, (long)endDate, options, promise);
+        } catch (Error e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void saveWorkout(double startDate, double endDate, ReadableMap options, Promise promise) {
+        try {
+            mGoogleFitManager.getActivityHistory().saveWorkout((long)startDate, (long)endDate, options, promise);
+        } catch (Error e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void deleteAllWorkout(double startDate, double endDate, ReadableMap options, Promise promise) {
+        try {
+            mGoogleFitManager.getActivityHistory().deleteAllWorkout((long)startDate, (long)endDate, options, promise);
         } catch (Error e) {
             promise.reject(e);
         }

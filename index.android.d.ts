@@ -115,6 +115,22 @@ declare module 'react-native-google-fit' {
       options: StartAndEndDate & Partial<BucketOptions>
     ) => Promise<BloodPressureResponse[]>;
 
+    getBloodGlucoseSamples: (
+      options: StartAndEndDate & Partial<BucketOptions>
+    ) => Promise<BloodGlucoseResponse[]>;
+
+    getBodyTemperatureSamples: (
+      options: StartAndEndDate & Partial<BucketOptions>
+    ) => Promise<BodyTemperatureResponse[]>;
+
+    getOxygenSaturationSamples: (
+      options: StartAndEndDate & Partial<BucketOptions>
+    ) => Promise<OxygenSaturationResponse[]>;
+
+    saveBloodGlucose: (
+      options: { date: string, value: number },
+    ) => Promise<Boolean | undefined>
+
     saveWeight: (
       options: WeightData,
       callback: (isError: boolean, result: true) => void
@@ -158,6 +174,7 @@ declare module 'react-native-google-fit' {
     ) => Promise<SleepSampleResponse[]>
 
     /**
+     * TODO: Stayfitt code
      * Get the activity sessions over a specified date range.
      * @param {Object} options getActivitySessions accepts an options object containing required startDate: ISO8601Timestamp and endDate: ISO8601Timestamp.
      */
@@ -167,6 +184,18 @@ declare module 'react-native-google-fit' {
 
     saveSleep: (
       options: SleepSample
+    ) => Promise<Boolean | undefined>
+
+    getWorkoutSession: (
+      options: StartAndEndDate & { readSessionFromAllApps?: boolean }
+    ) => Promise<WorkoutSessionResponse[] | undefined>
+
+    saveWorkout: (
+      options: WorkoutSample
+    ) => Promise<Boolean | undefined>
+
+    deleteAllWorkout: (
+      options: DeleteOptions
     ) => Promise<Boolean | undefined>
 
     isAvailable(callback: (isError: boolean, result: boolean) => void): void
@@ -191,7 +220,17 @@ declare module 'react-native-google-fit' {
 
   export type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
-  export type BucketUnit = "NANOSECOND" | "MICROSECOND" | "MILLISECOND" | "SECOND" | "MINUTE" | "HOUR" | "DAY";
+  export type BucketUnitType = "NANOSECOND" | "MICROSECOND" | "MILLISECOND" | "SECOND" | "MINUTE" | "HOUR" | "DAY";
+
+  export enum BucketUnit {
+    NANOSECOND = "NANOSECOND",
+    MICROSECOND = "MICROSECOND",
+    MILLISECOND = "MILLISECOND",
+    SECOND = "SECOND",
+    MINUTE = "MINUTE",
+    HOUR = "HOUR",
+    DAY =  "DAY"
+  }
 
   export type WeightResponse = {
     addedBy: string
@@ -283,6 +322,27 @@ declare module 'react-native-google-fit' {
     day: Day
   }
 
+  export type BloodGlucoseResponse = {
+    startDate: string,
+    endDate: string,
+    value: number,
+    day: Day
+  }
+
+  export type BodyTemperatureResponse = {
+    startDate: string,
+    endDate: string,
+    value: number,
+    day: Day
+  }
+
+  export type OxygenSaturationResponse = {
+    startDate: string,
+    endDate: string,
+    value: number,
+    day: Day
+  }
+
   export type WeightData = { date: string } & ({ unit: 'pound', value: number } | {});
 
   export type AuthorizeResponse = { success: true} | {success: false, message: string };
@@ -295,18 +355,36 @@ declare module 'react-native-google-fit' {
   }
 
   export type ActivitySampleResponse = {
-    sourceName: string,
-    device: string,
-    sourceId: string,
-    tracked: boolean,
-    activityName: string,
-    end: number,
-    start: number,
-    calories?: number,
-    quantity?: number,
+    sourceName: string
+    device: string
+    sourceId: string
+    tracked: boolean
+    activityName: string
+    end: number
+    start: number
+    calories?: number
+    quantity?: number
+    steps?: number
     distance?: number
+    intensity?: number
+    duration?: number
   }
 
+  export type WorkoutSessionResponse = {
+    appPackageName: string
+    activity: string
+    description: string
+    identifier: string
+    startDate: number
+    endDate: number
+    steps: string
+    duration: string
+    distance: string
+    calories: string
+    intensity: string
+  };
+
+  // TODO: Stayfitt code
   export type ActivitySessionResponseDatasetField =  {
     "points":
       {
@@ -365,6 +443,18 @@ declare module 'react-native-google-fit' {
     identifier: string,
     description: string,
     granularity: Granularity[]
+  }
+
+  export type WorkoutSample = {
+    startDate: string,
+    endDate: string,
+    activityType: ActivityType,
+    sessionName: string,
+    identifier: string,
+    description?: string,
+    calories?: number,
+    steps?: number,
+    intensity?: number,
   }
 
   export type Granularity = {
@@ -478,6 +568,127 @@ declare module 'react-native-google-fit' {
     IRON = 'iron',
   }
 
+  export enum ActivityType {
+    Aerobics = "aerobics",
+    Archery = "archery",
+    Badminton = "badminton",
+    Baseball = "baseball",
+    Basketball = "basketball",
+    Biathlon = "biathlon",
+    Biking = "biking",
+    Handbiking = "biking.hand",
+    Mountain_biking = "biking.mountain",
+    Road_biking = "biking.road",
+    Spinning = "biking.spinning",
+    Stationary_biking = "biking.stationary",
+    Utility_biking = "biking.utility",
+    Boxing = "boxing",
+    Calisthenics = "calisthenics",
+    Circuit_training = "circuit_training",
+    Cricket = "cricket",
+    Crossfit = "crossfit",
+    Curling = "curling",
+    Dancing = "dancing",
+    Diving = "diving",
+    Elevator = "elevator",
+    Elliptical = "elliptical",
+    Ergometer = "ergometer",
+    Escalator = "escalator",
+    Fencing = "fencing",
+    Football_American = "football.american",
+    Football_Australian = "football.australian",
+    Football_Soccer = "football.soccer",
+    Frisbee_Disc = "frisbee_disc",
+    Gardening = "gardening",
+    Golf = "golf",
+    Guided_Breathing = "guided_breathing",
+    Gymnastics = "gymnastics",
+    Handball = "handball",
+    HIIT = "interval_training.high_intensity",
+    Hiking = "hiking",
+    Hockey = "hockey",
+    Horseback_riding = "horseback_riding",
+    Housework = "housework",
+    Ice_skating = "ice_skating",
+    In_vehicle = "in_vehicle",
+    Interval_Training = "interval_training",
+    Jumping_rope = "jump_rope",
+    Kayaking = "kayaking",
+    Kettlebell_training = "kettlebell_training",
+    Kickboxing = "kickboxing",
+    Kick_Scooter = "kick_scooter",
+    Kitesurfing = "kitesurfing",
+    Martial_arts = "martial_arts",
+    Meditation = "meditation",
+    Mime_Type_Prefix = "vnd.google.fitness.activity/",
+    Mixed_martial_arts = "martial_arts.mixed",
+    Other_unclassified_fitness_activity = "other",
+    P90X_exercises = "p90x",
+    Paragliding = "paragliding",
+    Pilates = "pilates",
+    Polo = "polo",
+    Racquetball = "racquetball",
+    Rock_climbing = "rock_climbing",
+    Rowing = "rowing",
+    Rowing_machine = "rowing.machine",
+    Rugby = "rugby",
+    Running = "running",
+    Jogging = "running.jogging",
+    Running_on_sand = "running.sand",
+    Running_treadmill = "running.treadmill",
+    Sailing = "sailing",
+    Scuba_diving = "scuba_diving",
+    Skateboarding = "skateboarding",
+    Skating = "skating",
+    Skating_Cross = "skating.cross",
+    Skating_Indoor = "skating.indoor",
+    Skating_Inline_rollerblading = "skating.inline",
+    Skiing = "skiing",
+    Skiing_Back_Country = "skiing.back_country",
+    Skiing_Cross_Country = "skiing.cross_country",
+    Skiing_Downhill = "skiing.downhill",
+    Skiing_Kite = "skiing.kite",
+    Skiing_Roller = "skiing.roller",
+    Sledding = "sledding",
+    Snowboarding = "snowboarding",
+    Snowmobile = "snowmobile",
+    Snowshoeing = "snowshoeing",
+    Softball = "softball",
+    Squash = "squash",
+    Stair_climbing = "stair_climbing",
+    Stair_climbing_machine = "stair_climbing.machine",
+    Stand_up_paddleboarding = "standup_paddleboarding",
+    Status_Active = "ActiveActionStatus",
+    Status_Completed = "CompletedActionStatus",
+    Still_not_moving = "still",
+    Strength_training = "strength_training",
+    Surfing = "surfing",
+    Swimming = "swimming",
+    Swimming_open_water = "swimming.open_water",
+    Swimming_swimming_pool = "swimming.pool",
+    Table_tennis_ping_pong = "table_tennis",
+    Team_sports = "team_sports",
+    Tennis = "tennis",
+    Tilting_sudden_device_gravity_change = "tilting",
+    Treadmill_walking_or_running = "treadmill",
+    Unknown_unable_to_detect_activity = "unknown",
+    Volleyball = "volleyball",
+    Volleyball_beach = "volleyball.beach",
+    Volleyball_indoor = "volleyball.indoor",
+    Wakeboarding = "wakeboarding",
+    Walking = "walking",
+    Walking_fitness = "walking.fitness",
+    Walking_nording = "walking.nordic",
+    Walking_treadmill = "walking.treadmill",
+    Walking_stroller = "walking.stroller",
+    Waterpolo = "water_polo",
+    Weightlifting = "weightlifting",
+    Wheelchair = "wheelchair",
+    Windsurfing = "windsurfing",
+    Yoga = "yoga",
+    Zumba = "zumba"
+  }
+
   export enum Scopes {
     FITNESS_ACTIVITY_READ = 'https://www.googleapis.com/auth/fitness.activity.read',
     FITNESS_ACTIVITY_WRITE = 'https://www.googleapis.com/auth/fitness.activity.write',
@@ -498,7 +709,9 @@ declare module 'react-native-google-fit' {
     FITNESS_REPRODUCTIVE_HEALTH_READ = 'https://www.googleapis.com/auth/fitness.reproductive_health.read',
     FITNESS_REPRODUCTIVE_HEALTH_WRITE = 'https://www.googleapis.com/auth/fitness.reproductive_health.write',
     FITNESS_SLEEP_READ =  'https://www.googleapis.com/auth/fitness.sleep.read',
-    FITNESS_SLEEP_WRITE = 'https://www.googleapis.com/auth/fitness.sleep.write'
+    FITNESS_SLEEP_WRITE = 'https://www.googleapis.com/auth/fitness.sleep.write',
+    FITNESS_HEART_RATE_READ = 'https://www.googleapis.com/auth/fitness.heart_rate.read',
+    FITNESS_HEART_RATE_WRITE= 'https://www.googleapis.com/auth/fitness.heart_rate.write'
   }
 
   const googleFit: GoogleFit;

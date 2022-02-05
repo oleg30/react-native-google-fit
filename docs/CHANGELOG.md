@@ -1,6 +1,18 @@
 ### Changelog:
 
 ```
+0.18.2  ~ temporary hotfix (#268, kudos to @nikhil-kumar-160)
+
+0.18.1  + Implement `getBodyTemperatureSamples()` and `getOxygenSaturationSamples()` (#266, kudos to @mluksha)
+        ~ Update typescript definitions
+        
+0.18.0  + Implement Workout Support[Experimental] (#251)
+        ~ typescript: add `BucketUnitType` and `BucketUnit` helper
+        
+0.17.1  + Implement basic getBloodGlucoseSamples(kudos @ksetrin)
+        + Add android 11 note in Doc (kudos @moulie415)
+        ~ Update typescript definitions
+
 0.16.3  + Implement getMoveMinutes
         ~ Refoctor and remove duplicated processData in stepHistory
         ~ Update typescript definitions

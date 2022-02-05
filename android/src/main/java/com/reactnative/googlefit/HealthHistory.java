@@ -38,23 +38,29 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.android.gms.fitness.data.Field.FIELD_MEAL_TYPE;
+import static com.google.android.gms.fitness.data.HealthFields.FIELD_BLOOD_GLUCOSE_LEVEL;
+import static com.google.android.gms.fitness.data.HealthFields.FIELD_BLOOD_GLUCOSE_SPECIMEN_SOURCE;
+import static com.google.android.gms.fitness.data.HealthFields.FIELD_TEMPORAL_RELATION_TO_MEAL;
+import static com.google.android.gms.fitness.data.HealthFields.FIELD_TEMPORAL_RELATION_TO_SLEEP;
 
-public class HeartrateHistory {
+
+public class HealthHistory {
 
     private ReactContext mReactContext;
     private GoogleFitManager googleFitManager;
     private DataSet Dataset;
     private DataType dataType;
 
-    private static final String TAG = "Heart Rate History";
+    private static final String TAG = "Health History";
 
-    public HeartrateHistory(ReactContext reactContext, GoogleFitManager googleFitManager, DataType dataType){
+    public HealthHistory(ReactContext reactContext, GoogleFitManager googleFitManager, DataType dataType){
         this.mReactContext = reactContext;
         this.googleFitManager = googleFitManager;
         this.dataType = dataType;
     }
 
-    public HeartrateHistory(ReactContext reactContext, GoogleFitManager googleFitManager){
+    public HealthHistory(ReactContext reactContext, GoogleFitManager googleFitManager){
         this(reactContext, googleFitManager, DataType.TYPE_HEART_RATE_BPM);
     }
 
@@ -94,16 +100,13 @@ public class HeartrateHistory {
         return map;
     }
 
-    public boolean save(ReadableMap sample) {
-        // TODO: how to save blood pressure?
-
+    public boolean saveBloodGlucose(ReadableMap sample) {
         this.Dataset = createDataForRequest(
-                this.dataType,    // for heart rate, it would be DataType.TYPE_HEART_RATE_BPM
+                this.dataType,
                 DataSource.TYPE_RAW,
-                sample.getDouble("value"),                  // heart rate in bmp
-                (long)sample.getDouble("date"),              // start time
-                (long)sample.getDouble("date"),                // end time
-                TimeUnit.MILLISECONDS                // Time Unit, for example, TimeUnit.MILLISECONDS
+                sample.getDouble("value"),
+                (long)sample.getDouble("date"),
+                TimeUnit.MILLISECONDS
         );
         new InsertAndVerifyDataTask(this.Dataset).execute();
 
@@ -157,13 +160,12 @@ public class HeartrateHistory {
      * @param dataType DataType Fitness Data Type object
      * @param dataSourceType int Data Source Id. For example, DataSource.TYPE_RAW
      * @param value Object Values for the fitness data. They must be int or float
-     * @param startTime long Time when the fitness activity started
-     * @param endTime long Time when the fitness activity finished
+     * @param date long Time when the activity started
      * @param timeUnit TimeUnit Time unit in which period is expressed
      * @return
      */
-    private DataSet createDataForRequest(DataType dataType, int dataSourceType, Double value,
-                                         long startTime, long endTime, TimeUnit timeUnit) {
+    private DataSet createDataForRequest(DataType dataType, int dataSourceType, double value,
+                                         long date, TimeUnit timeUnit) {
         DataSource dataSource = new DataSource.Builder()
                 .setAppPackageName(GoogleFitPackage.PACKAGE_NAME)
                 .setDataType(dataType)
@@ -171,10 +173,10 @@ public class HeartrateHistory {
                 .build();
 
         DataSet dataSet = DataSet.create(dataSource);
-        DataPoint dataPoint = dataSet.createDataPoint().setTimeInterval(startTime, endTime, timeUnit);
+        DataPoint dataPoint = dataSet.createDataPoint();
 
-        float f1 = Float.valueOf(value.toString());
-        dataPoint = dataPoint.setFloatValues(f1);
+        dataPoint.setTimestamp(date, timeUnit);
+        dataPoint.getValue(FIELD_BLOOD_GLUCOSE_LEVEL).setFloat((float) value);
 
         dataSet.add(dataPoint);
 
@@ -182,10 +184,7 @@ public class HeartrateHistory {
     }
 
     private void processDataSet(DataSet dataSet, WritableArray map) {
-
-        //Log.i(TAG, "Data returned for Data type: " + dataSet.getDataType().getName());
         Format formatter = new SimpleDateFormat("EEE");
-//        WritableMap stepMap = Arguments.createMap();
 
         for (DataPoint dp : dataSet.getDataPoints()) {
             WritableMap stepMap = Arguments.createMap();
