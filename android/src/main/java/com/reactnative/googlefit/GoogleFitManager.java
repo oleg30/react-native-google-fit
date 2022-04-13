@@ -32,6 +32,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ErrorDialogFragment;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.fitness.Fitness;
@@ -139,7 +140,7 @@ public class GoogleFitManager implements ActivityEventListener {
 
     public void authorize(ArrayList<String> userScopes) {
         //final ReactContext mReactContext = this.mReactContext;
-
+        Log.i(TAG, "New API Authorization - Started");
 //    reserve to replace deprecated Api in the future
         GoogleSignInOptions.Builder optionsBuilder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestEmail()
@@ -239,7 +240,9 @@ public class GoogleFitManager implements ActivityEventListener {
     }
 
     public boolean isAuthorized() {
-        return GoogleSignIn.getLastSignedInAccount(mReactContext) != null;
+        boolean isSigned = GoogleSignIn.getLastSignedInAccount(mReactContext) != null;
+        Log.i(TAG, "New API Authorization - isAuthorized = "+isSigned);
+        return isSigned;
         //if (mApiClient != null && mApiClient.isConnected()) {
         //    return true;
         //} else {
@@ -280,19 +283,20 @@ public class GoogleFitManager implements ActivityEventListener {
 //        }
 //    }
 //
-//    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
-//        try {
-//            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-//            if (!mApiClient.isConnecting() && !mApiClient.isConnected()) {
-//                mApiClient.connect();
-//            }
-//        } catch (ApiException e) {
-//            Log.e(TAG, "Authorization - Cancel");
-//            WritableMap map = Arguments.createMap();
-//            map.putString("message", "" + "Authorization cancelled");
-//            sendEvent(mReactContext, "GoogleFitAuthorizeFailure", map);
-//        }
-//    }
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            mSignInAccount = account;
+            Log.i(TAG, "New API Authorization - Connected");
+            sendEvent(mReactContext, "GoogleFitAuthorizeSuccess", null);
+        } catch (ApiException e) {
+            Log.e(TAG, "Authorization - Canceled, failed code=" + e.getStatusCode());
+            WritableMap map = Arguments.createMap();
+            map.putString("message", "" + "Authorization cancelled");
+            sendEvent(mReactContext, "GoogleFitAuthorizeFailure", map);
+            mSignInAccount = null;
+        }
+    }
 
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
@@ -315,19 +319,20 @@ public class GoogleFitManager implements ActivityEventListener {
             mAuthInProgress = false;
             // The Task returned from this call is always completed, no need to attach a listener.
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            if (task.isSuccessful()) {
-                // Sign in succeeded, proceed with account
-                Log.i(TAG, "New API Authorization - Connected");
-                sendEvent(mReactContext, "GoogleFitAuthorizeSuccess", null);
-                mSignInAccount = task.getResult();
-            } else {
-                // Sign in failed, handle failure and update UI
-                Log.e(TAG, "Authorization - Cancel");
-                WritableMap map = Arguments.createMap();
-                map.putString("message", "" + "Authorization cancelled");
-                sendEvent(mReactContext, "GoogleFitAuthorizeFailure", map);
-                mSignInAccount = null;
-            }
+            handleSignInResult(task);
+            //if (task.isSuccessful()) {
+            //    // Sign in succeeded, proceed with account
+            //    Log.i(TAG, "New API Authorization - Connected");
+            //    sendEvent(mReactContext, "GoogleFitAuthorizeSuccess", null);
+            //    mSignInAccount = task.getResult();
+            //} else {
+            //    // Sign in failed, handle failure and update UI
+            //    Log.e(TAG, "Authorization - Cancel (exception: "+task.getException()+")");
+            //    WritableMap map = Arguments.createMap();
+            //    map.putString("message", "" + "Authorization cancelled");
+            //    sendEvent(mReactContext, "GoogleFitAuthorizeFailure", map);
+            //    mSignInAccount = null;
+            //}
         }
     }
 
