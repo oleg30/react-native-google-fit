@@ -28,13 +28,17 @@ import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.request.DataReadRequest;
+import com.google.android.gms.fitness.result.DataReadResponse;
 import com.google.android.gms.fitness.result.DataReadResult;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 import org.json.JSONObject;
 
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,36 +63,48 @@ public class CalorieHistory {
         DateFormat dateFormat = DateFormat.getDateInstance();
         Log.i(TAG, "Range Start: " + dateFormat.format(startTime));
         Log.i(TAG, "Range End: " + dateFormat.format(endTime));
-
-        //Check how much calories were expended in specific days.
-        DataReadRequest readRequest = new DataReadRequest.Builder()
-                .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
-                .bucketByTime(bucketInterval, HelperUtil.processBucketUnit(bucketUnit))
-                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-                .build();
-
-        DataReadResult dataReadResult = Fitness.HistoryApi.readData(googleFitManager.getGoogleApiClient(), readRequest).await(1, TimeUnit.MINUTES);
-
-
         WritableArray map = Arguments.createArray();
+        //Check how much calories were expended in specific days.
+        //DataReadRequest readRequest = new DataReadRequest.Builder()
+        //        .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
+        //        .bucketByTime(bucketInterval, HelperUtil.processBucketUnit(bucketUnit))
+        //        .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+        //        .build();
+//
+        //DataReadResult dataReadResult = Fitness.HistoryApi.readData(googleFitManager.getGoogleApiClient(), readRequest).await(1, TimeUnit.MINUTES);
 
-        //Used for aggregated data
-        if (dataReadResult.getBuckets().size() > 0) {
-            Log.i(TAG, "Number of buckets: " + dataReadResult.getBuckets().size());
-            for (Bucket bucket : dataReadResult.getBuckets()) {
-                List<DataSet> dataSets = bucket.getDataSets();
-                for (DataSet dataSet : dataSets) {
+        try {
+            Task<DataReadResponse> response = Fitness.getHistoryClient(mReactContext, googleFitManager.getmSignInAccount())
+                    .readData(new DataReadRequest.Builder()
+                            .aggregate(DataType.TYPE_CALORIES_EXPENDED)
+                            .aggregate(DataType.AGGREGATE_CALORIES_EXPENDED)
+                            .bucketByTime(bucketInterval, HelperUtil.processBucketUnit(bucketUnit))
+                            .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                            .build());
+
+
+            DataReadResponse dataReadResult = Tasks.await(response);
+            //Used for aggregated data
+            if (dataReadResult.getBuckets().size() > 0) {
+                Log.i(TAG, "Number of buckets: " + dataReadResult.getBuckets().size());
+                for (Bucket bucket : dataReadResult.getBuckets()) {
+                    List<DataSet> dataSets = bucket.getDataSets();
+                    for (DataSet dataSet : dataSets) {
+                        processDataSet(dataSet, map, basalCalculation);
+                    }
+                }
+            }
+            //Used for non-aggregated data
+            else if (dataReadResult.getDataSets().size() > 0) {
+                Log.i(TAG, "Number of returned DataSets: " + dataReadResult.getDataSets().size());
+                for (DataSet dataSet : dataReadResult.getDataSets()) {
                     processDataSet(dataSet, map, basalCalculation);
                 }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Reading "+TAG+" error: "+e+", stack: "+ Arrays.toString(e.getStackTrace()));
         }
-        //Used for non-aggregated data
-        else if (dataReadResult.getDataSets().size() > 0) {
-            Log.i(TAG, "Number of returned DataSets: " + dataReadResult.getDataSets().size());
-            for (DataSet dataSet : dataReadResult.getDataSets()) {
-                processDataSet(dataSet, map, basalCalculation);
-            }
-        }
+
 
         return map;
     }
@@ -103,13 +119,23 @@ public class CalorieHistory {
         cal.add(Calendar.WEEK_OF_YEAR, -1);
         long nst = cal.getTimeInMillis();
 
-        DataReadRequest.Builder builder = new DataReadRequest.Builder();
-        builder.aggregate(DataType.TYPE_BASAL_METABOLIC_RATE, DataType.AGGREGATE_BASAL_METABOLIC_RATE_SUMMARY);
-        builder.bucketByTime(1, TimeUnit.DAYS);
-        builder.setTimeRange(nst, _et, TimeUnit.MILLISECONDS);
-        DataReadRequest readRequest = builder.build();
+        //DataReadRequest.Builder builder = new DataReadRequest.Builder();
+        //builder.aggregate(DataType.TYPE_BASAL_METABOLIC_RATE, DataType.AGGREGATE_BASAL_METABOLIC_RATE_SUMMARY);
+        //builder.bucketByTime(1, TimeUnit.DAYS);
+        //builder.setTimeRange(nst, _et, TimeUnit.MILLISECONDS);
+        //DataReadRequest readRequest = builder.build();
+//
+        //DataReadResult dataReadResult = Fitness.HistoryApi.readData(googleFitManager.getGoogleApiClient(), readRequest).await();
 
-        DataReadResult dataReadResult = Fitness.HistoryApi.readData(googleFitManager.getGoogleApiClient(), readRequest).await();
+        Task<DataReadResponse> response = Fitness.getHistoryClient(mReactContext, googleFitManager.getmSignInAccount())
+                .readData(new DataReadRequest.Builder()
+                        .aggregate(DataType.TYPE_BASAL_METABOLIC_RATE)
+                        .aggregate(DataType.AGGREGATE_BASAL_METABOLIC_RATE_SUMMARY)
+                        .bucketByTime(1, TimeUnit.DAYS)
+                        .setTimeRange(nst, _et, TimeUnit.MILLISECONDS)
+                        .build());
+
+        DataReadResponse dataReadResult = Tasks.await(response);
 
         if (dataReadResult.getStatus().isSuccess()) {
             JSONObject obj = new JSONObject();
@@ -160,7 +186,7 @@ public class CalorieHistory {
                     try {
                         basal = getBasalAVG(dp.getEndTime(TimeUnit.MILLISECONDS));
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "getBasalAVG error: "+e+", stack: "+ Arrays.toString(e.getStackTrace()));
                     }
                 }
                 stepMap.putDouble("calorie", dp.getValue(field).asFloat() - basal);
