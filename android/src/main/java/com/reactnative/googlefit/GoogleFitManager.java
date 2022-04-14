@@ -98,6 +98,7 @@ public class GoogleFitManager implements ActivityEventListener {
     public GoogleSignInClient getGoogleSignInClient() {
         return mSignInClient;
     }
+    public GoogleSignInAccount getmSignInAccount() {return mSignInAccount;}
 
     public RecordingApi getRecordingApi() {
         return recordingApi;
