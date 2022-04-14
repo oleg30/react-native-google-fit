@@ -26,13 +26,18 @@ import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.request.DataReadRequest;
+import com.google.android.gms.fitness.result.DataReadResponse;
 import com.google.android.gms.fitness.result.DataReadResult;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 
@@ -53,35 +58,46 @@ public class DistanceHistory {
         DateFormat dateFormat = DateFormat.getDateInstance();
         Log.i(TAG, "Range Start: " + dateFormat.format(startTime));
         Log.i(TAG, "Range End: " + dateFormat.format(endTime));
-
-        //Check how much distance were walked and recorded in specified days
-        DataReadRequest readRequest = new DataReadRequest.Builder()
-                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
-                .bucketByTime(bucketInterval, HelperUtil.processBucketUnit(bucketUnit))
-                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-                .build();
-
-        DataReadResult dataReadResult = Fitness.HistoryApi.readData(googleFitManager.getGoogleApiClient(), readRequest).await(1, TimeUnit.MINUTES);
-
-
         WritableArray map = Arguments.createArray();
+        //Check how much distance were walked and recorded in specified days
+       //DataReadRequest readRequest = new DataReadRequest.Builder()
+       //        .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+       //        .bucketByTime(bucketInterval, HelperUtil.processBucketUnit(bucketUnit))
+       //        .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+       //        .build();
 
-        //Used for aggregated data
-        if (dataReadResult.getBuckets().size() > 0) {
-            Log.i(TAG, "Number of buckets: " + dataReadResult.getBuckets().size());
-            for (Bucket bucket : dataReadResult.getBuckets()) {
-                List<DataSet> dataSets = bucket.getDataSets();
-                for (DataSet dataSet : dataSets) {
+       //DataReadResult dataReadResult = Fitness.HistoryApi.readData(googleFitManager.getGoogleApiClient(), readRequest).await(1, TimeUnit.MINUTES);
+        try {
+            Task<DataReadResponse> response = Fitness.getHistoryClient(mReactContext, googleFitManager.getmSignInAccount())
+                .readData(new DataReadRequest.Builder()
+                        .aggregate(DataType.TYPE_DISTANCE_DELTA)
+                        .aggregate(DataType.AGGREGATE_DISTANCE_DELTA)
+                        .bucketByTime(bucketInterval, HelperUtil.processBucketUnit(bucketUnit))
+                        .read(DataType.TYPE_STEP_COUNT_DELTA)
+                        .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                        .build());
+
+
+            DataReadResponse dataReadResult = Tasks.await(response);
+            //Used for aggregated data
+            if (dataReadResult.getBuckets().size() > 0) {
+                Log.i(TAG, "Number of buckets: " + dataReadResult.getBuckets().size());
+                for (Bucket bucket : dataReadResult.getBuckets()) {
+                    List<DataSet> dataSets = bucket.getDataSets();
+                    for (DataSet dataSet : dataSets) {
+                        processDataSet(dataSet, map);
+                    }
+                }
+            }
+            //Used for non-aggregated data
+            else if (dataReadResult.getDataSets().size() > 0) {
+                Log.i(TAG, "Number of returned DataSets: " + dataReadResult.getDataSets().size());
+                for (DataSet dataSet : dataReadResult.getDataSets()) {
                     processDataSet(dataSet, map);
                 }
             }
-        }
-        //Used for non-aggregated data
-        else if (dataReadResult.getDataSets().size() > 0) {
-            Log.i(TAG, "Number of returned DataSets: " + dataReadResult.getDataSets().size());
-            for (DataSet dataSet : dataReadResult.getDataSets()) {
-                processDataSet(dataSet, map);
-            }
+        } catch (Exception e) {
+            Log.e(TAG, "Reading "+TAG+" error: "+e+", stack: "+Arrays.toString(e.getStackTrace()));
         }
 
         return map;
