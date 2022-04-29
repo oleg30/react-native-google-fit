@@ -243,6 +243,7 @@ public class GoogleFitManager implements ActivityEventListener {
     public boolean isAuthorized() {
         boolean isSigned = GoogleSignIn.getLastSignedInAccount(mReactContext) != null;
         Log.i(TAG, "New API Authorization - isAuthorized = "+isSigned);
+        if (isSigned) mSignInAccount = GoogleSignIn.getLastSignedInAccount(mReactContext);
         return isSigned;
         //if (mApiClient != null && mApiClient.isConnected()) {
         //    return true;
