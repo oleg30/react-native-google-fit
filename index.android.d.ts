@@ -215,7 +215,8 @@ declare module 'react-native-google-fit' {
     ) => void
 
     unsubscribeListeners: () => void
-
+    
+    checkPermissions: () => Promise<boolean | undefined>
   }
 
   export type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
