@@ -549,4 +549,17 @@ public class GoogleFitModule extends ReactContextBaseJavaModule implements Lifec
             promise.reject(e);
         }
     }
+    
+    @ReactMethod
+    public void checkPermissions(Promise promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (ContextCompat.checkSelfPermission(mReactContext, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(Objects.requireNonNull(mReactContext.getCurrentActivity()), new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, 10);
+                }
+            }
+        } catch (Error e) {
+            promise.reject(e);
+        }
+    }
 }
