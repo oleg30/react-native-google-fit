@@ -130,7 +130,7 @@ public class CalorieHistory {
         Task<DataReadResponse> response = Fitness.getHistoryClient(mReactContext, googleFitManager.getmSignInAccount())
                 .readData(new DataReadRequest.Builder()
                         .aggregate(DataType.TYPE_BASAL_METABOLIC_RATE)
-                        .aggregate(DataType.AGGREGATE_BASAL_METABOLIC_RATE_SUMMARY)
+                        .aggregate(DataType.AGGREGATE_CALORIES_EXPENDED)
                         .bucketByTime(1, TimeUnit.DAYS)
                         .setTimeRange(nst, _et, TimeUnit.MILLISECONDS)
                         .build());
