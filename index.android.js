@@ -349,6 +349,14 @@ class RNGoogleFit {
     }
   }
 
+  checkPermissions = async () => {
+    try {
+      return googleFit.checkPermissions()
+    } catch (e) {
+      return e
+    }
+  }
+  
   saveFood(options, callback) {
     options.date = Date.parse(options.date)
     googleFit.saveFood(
